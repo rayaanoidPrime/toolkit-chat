@@ -5,7 +5,7 @@ import {
   googleDriveReadFileToolConfigServer,
 } from "./tools/server";
 import { GoogleDriveTools } from "./tools";
-import { api } from "@/trpc/server";
+import { env } from "@/env";
 
 export const googleDriveToolkitServer = createServerToolkit(
   baseGoogleDriveToolkitConfig,
@@ -26,23 +26,23 @@ export const googleDriveToolkitServer = createServerToolkit(
 - Combine search results from multiple queries to get comprehensive document coverage
 - Use folder-based searches when documents are organized in specific directory structures`,
   async () => {
-    const account = await api.accounts.getAccountByProvider("google");
+    const keyFile = env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH as string;
+    const folderId = env.GOOGLE_DRIVE_FOLDER_ID as string;
 
-    if (!account?.access_token) {
-      throw new Error("No Google account found or access token missing");
+    if (!keyFile) {
+      throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY_PATH is not set");
     }
 
-    if (!account.scope?.includes("drive.readonly")) {
-      throw new Error("Google account does not have drive.readonly scope");
+    if (!folderId) {
+      throw new Error("GOOGLE_DRIVE_FOLDER_ID is not set");
     }
 
     return {
       [GoogleDriveTools.SearchFiles]: googleDriveSearchFilesToolConfigServer(
-        account.access_token,
+        keyFile,
+        folderId,
       ),
-      [GoogleDriveTools.ReadFile]: googleDriveReadFileToolConfigServer(
-        account.access_token,
-      ),
+      [GoogleDriveTools.ReadFile]: googleDriveReadFileToolConfigServer(keyFile),
     };
   },
 );

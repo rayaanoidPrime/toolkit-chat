@@ -1,6 +1,8 @@
 import type { ClientToolkit } from "../types";
 import {
   Toolkits,
+  CLIENT_AVAILABLE_TOOLKIT_IDS,
+  type ClientAvailableToolkits,
   type ServerToolkitNames,
   type ServerToolkitParameters,
 } from "./shared";
@@ -20,19 +22,35 @@ type ClientToolkits = {
   >;
 };
 
-export const clientToolkits: ClientToolkits = {
+// Define the type for the filtered client toolkits
+type FilteredClientToolkits = Pick<ClientToolkits, ClientAvailableToolkits>;
+
+// All client toolkits (complete mapping)
+const allClientToolkits: ClientToolkits = {
   [Toolkits.E2B]: e2bClientToolkit,
-  [Toolkits.Memory]: mem0ClientToolkit,
-  [Toolkits.Image]: imageClientToolkit,
-  [Toolkits.Exa]: exaClientToolkit,
+  [Toolkits.GoogleDrive]: googleDriveClientToolkit,
   [Toolkits.Github]: githubClientToolkit,
   [Toolkits.GoogleCalendar]: googleCalendarClientToolkit,
   [Toolkits.Notion]: notionClientToolkit,
-  [Toolkits.GoogleDrive]: googleDriveClientToolkit,
+  [Toolkits.Exa]: exaClientToolkit,
+  [Toolkits.Image]: imageClientToolkit,
+  [Toolkits.Memory]: mem0ClientToolkit,
 };
 
-export function getClientToolkit<T extends Toolkits>(
+// Filter client toolkits based on available ones
+export const clientToolkits: FilteredClientToolkits = Object.fromEntries(
+  CLIENT_AVAILABLE_TOOLKIT_IDS.map((toolkitId) => [
+    toolkitId,
+    allClientToolkits[toolkitId],
+  ]),
+) as Pick<ClientToolkits, ClientAvailableToolkits>;
+
+// Updated function to work with available toolkits only
+export function getClientToolkit<T extends ClientAvailableToolkits>(
   server: T,
 ): ClientToolkit<ServerToolkitNames[T], ServerToolkitParameters[T]> {
-  return clientToolkits[server];
+  return clientToolkits[server] as ClientToolkit<
+    ServerToolkitNames[T],
+    ServerToolkitParameters[T]
+  >;
 }

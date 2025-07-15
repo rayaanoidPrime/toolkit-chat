@@ -3,15 +3,17 @@ import { google } from "googleapis";
 import type { ServerToolConfig } from "@/toolkits/types";
 
 export const googleDriveReadFileToolConfigServer = (
-  accessToken: string,
+  keyFile: string,
 ): ServerToolConfig<
   typeof readFileTool.inputSchema.shape,
   typeof readFileTool.outputSchema.shape
 > => {
   return {
     callback: async ({ fileId, exportFormat }) => {
-      const auth = new google.auth.OAuth2();
-      auth.setCredentials({ access_token: accessToken });
+      const auth = new google.auth.GoogleAuth({
+        keyFile: keyFile,
+        scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+      });
 
       const drive = google.drive({ version: "v3", auth });
 

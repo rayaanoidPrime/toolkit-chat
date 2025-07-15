@@ -3,15 +3,18 @@ import { google } from "googleapis";
 import type { ServerToolConfig } from "@/toolkits/types";
 
 export const googleDriveSearchFilesToolConfigServer = (
-  accessToken: string,
+  keyFile: string,
+  folderId?: string,
 ): ServerToolConfig<
   typeof searchFilesTool.inputSchema.shape,
   typeof searchFilesTool.outputSchema.shape
 > => {
   return {
     callback: async ({ query, pageToken, pageSize, mimeType }) => {
-      const auth = new google.auth.OAuth2();
-      auth.setCredentials({ access_token: accessToken });
+      const auth = new google.auth.GoogleAuth({
+        keyFile: keyFile,
+        scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+      });
 
       const drive = google.drive({ version: "v3", auth });
 
@@ -21,6 +24,10 @@ export const googleDriveSearchFilesToolConfigServer = (
         searchQuery = `fullText contains '${query}' or name contains '${query}' and mimeType='${mimeType}'`;
       } else if (query) {
         searchQuery = `fullText contains '${query}' or name contains '${query}'`;
+      }
+
+      if (folderId) {
+        searchQuery = `'${folderId}' in parents and ${searchQuery}`;
       }
 
       const response = await drive.files.list({

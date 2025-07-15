@@ -12,6 +12,7 @@ import { Logo } from "@/components/ui/logo";
 import { useSearchParams } from "next/navigation";
 import { WelcomeDialog } from "../welcome-dialog";
 import { Anvil } from "lucide-react";
+import { env } from "@/env";
 
 export const ChatContent = ({
   id,
@@ -107,7 +108,8 @@ export const ChatContent = ({
                 >
                   {workbench
                     ? `${workbench.name} Workbench`
-                    : "Welcome to Toolkit.dev"}
+                    : (env.NEXT_PUBLIC_CHATBOT_NAME ??
+                      "Welcome to Toolkit.dev")}
                 </motion.h1>
               </motion.div>
             )}

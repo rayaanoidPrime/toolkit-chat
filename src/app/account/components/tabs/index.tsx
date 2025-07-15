@@ -1,22 +1,22 @@
 import React from "react";
 
-import { File, User, Brain, Image as ImageIcon } from "lucide-react";
+import { File, Brain, Image as ImageIcon } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { ConnectedAccounts } from "./connected-accounts";
 import { Attachments } from "./attachments";
 import { Memories } from "./memories";
 import { Images } from "./images";
 import { HStack } from "@/components/ui/stack";
 
 const tabs = [
-  {
-    label: "Connected Accounts",
-    value: "connected-accounts",
-    component: <ConnectedAccounts />,
-    icon: <User />,
-  },
+  // the end-user does not need to connect accounts
+  // {
+  //   label: "Connected Accounts",
+  //   value: "connected-accounts",
+  //   component: <ConnectedAccounts />,
+  //   icon: <User />,
+  // },
   {
     label: "Attachments",
     value: "attachments",

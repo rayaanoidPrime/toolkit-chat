@@ -116,9 +116,12 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     OPENROUTER_API_KEY: z.string(),
+    CLIENT_AVAILABLE_TOOLKITS: z.string().optional(),
     EXA_API_KEY: z.string().optional(),
     MEM0_API_KEY: z.string().optional(),
     E2B_API_KEY: z.string().optional(),
+    GOOGLE_SERVICE_ACCOUNT_KEY_PATH: z.string().optional(),
+    GOOGLE_DRIVE_FOLDER_ID: z.string().optional(),
     ...createAuthSchema(),
     ...createImageModelSchema(),
   },
@@ -129,7 +132,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_CHATBOT_NAME: z.string().optional(),
   },
 
   /**
@@ -142,11 +145,16 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    CLIENT_AVAILABLE_TOOLKITS: process.env.CLIENT_AVAILABLE_TOOLKITS,
     EXA_API_KEY: process.env.EXA_API_KEY,
     MEM0_API_KEY: process.env.MEM0_API_KEY,
     E2B_API_KEY: process.env.E2B_API_KEY,
+    GOOGLE_SERVICE_ACCOUNT_KEY_PATH:
+      process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH,
+    GOOGLE_DRIVE_FOLDER_ID: process.env.GOOGLE_DRIVE_FOLDER_ID,
     ...authRuntimeEnv(),
     ...imageModelRuntimeEnv(),
+    NEXT_PUBLIC_CHATBOT_NAME: process.env.NEXT_PUBLIC_CHATBOT_NAME,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
