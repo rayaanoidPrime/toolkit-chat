@@ -1,7 +1,7 @@
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/stack";
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { allClientToolkits } from "@/toolkits/toolkits/client";
 import type { Toolkits } from "@/toolkits/toolkits/shared";
 import { Check, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
@@ -102,7 +102,7 @@ export const ToolMessage: React.FC<{
   toolkit: Toolkits;
   isCompleted: boolean;
 }> = ({ callComponent, resultComponent, toolkit, isCompleted }) => {
-  const clientToolkit = clientToolkits[toolkit];
+  const clientToolkit = allClientToolkits[toolkit];
   const IconComponent = clientToolkit.icon;
 
   return (

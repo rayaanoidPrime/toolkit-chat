@@ -1,4 +1,4 @@
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { allClientToolkits } from "@/toolkits/toolkits/client";
 import type { Toolkits } from "@/toolkits/toolkits/shared";
 import { createRef, useRef } from "react";
 import type { WorkbenchExample } from "./types";
@@ -111,7 +111,7 @@ const ToolkitNode: React.FC<{
   nodeRef: React.RefObject<HTMLDivElement>;
   color: string;
 }> = ({ toolkit, nodeRef, color }) => {
-  const clientToolkit = clientToolkits[toolkit];
+  const clientToolkit = allClientToolkits[toolkit];
   const IconComponent = clientToolkit.icon;
 
   const colorClasses = {

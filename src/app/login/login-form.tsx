@@ -13,10 +13,12 @@ interface LoginFormProps {
     name: string;
     id: string;
   }[];
+  chatbotName?: string;
 }
 
 export function LoginForm({
   providers,
+  chatbotName,
   className,
   ...props
 }: LoginFormProps & React.ComponentProps<"div">) {
@@ -30,7 +32,7 @@ export function LoginForm({
           <Logo className="size-16" />
           <VStack className="gap-1">
             <h1 className="text-primary text-2xl font-bold">
-              Welcome to Toolkit
+              Welcome to {chatbotName ?? "Toolkit"}
             </h1>
           </VStack>
         </VStack>

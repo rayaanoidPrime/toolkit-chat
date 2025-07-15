@@ -15,10 +15,11 @@ import { ThemeProvider } from "./_contexts/theme";
 import type { Metadata } from "next";
 
 import "@/styles/globals.css";
+import { env } from "@/env";
 
 export const metadata: Metadata = {
-  title: "Toolkit.dev",
-  description: "A highly-configurable open-source chat client",
+  title: env.NEXT_PUBLIC_CHATBOT_NAME! ?? "Toolkit.dev",
+  description: "A highly-configurable chat client",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

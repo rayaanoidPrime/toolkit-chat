@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import { env } from "@/env";
 import { AccountButton } from "./account-button";
 import { ColorModeToggle } from "./color-mode-toggle";
 import { HStack } from "@/components/ui/stack";
@@ -20,7 +20,7 @@ export const Navbar = async () => {
         </SidebarTrigger>
         <Link href="/">
           <h1 className="overflow-hidden text-lg font-bold whitespace-nowrap">
-            Toolkit.dev
+            {env.NEXT_PUBLIC_CHATBOT_NAME ?? "Toolkit.dev"}
           </h1>
         </Link>
       </HStack>

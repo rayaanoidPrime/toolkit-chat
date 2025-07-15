@@ -68,8 +68,9 @@ export const ToolkitList: React.FC<ToolkitListProps> = ({
               </HStack>
               <div className="bg-muted/50 w-full rounded-md border">
                 {Object.entries(clientToolkits)
-                  .filter(([, toolkit]) => toolkit.type === group.id)
+                  .filter(([, toolkit]) => toolkit?.type === group.id)
                   .map(([id, toolkit]) => {
+                    if (!toolkit) return null;
                     return (
                       <ToolkitItem
                         key={id}

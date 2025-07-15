@@ -3,6 +3,7 @@ import { HStack } from "@/components/ui/stack";
 import { ColorModeToggle } from "../../navbar/color-mode-toggle";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "../auth-modal";
+import { env } from "@/env";
 
 export const Navbar = () => {
   return (
@@ -11,7 +12,7 @@ export const Navbar = () => {
         <HStack>
           <Logo className="size-6" />
           <h1 className="shimmer-text overflow-hidden text-lg font-bold whitespace-nowrap">
-            Toolkit.dev
+            {env.NEXT_PUBLIC_CHATBOT_NAME ?? "Tolkit.dev"}
           </h1>
         </HStack>
         <HStack>

@@ -10,6 +10,7 @@ import { AuthButtons } from "../auth/auth-buttons";
 import { providers } from "@/server/auth/providers";
 import { Logo } from "@/components/ui/logo";
 import { VStack } from "@/components/ui/stack";
+import { env } from "@/env";
 
 interface AuthModalProps {
   children: React.ReactNode;
@@ -24,10 +25,11 @@ export const AuthModal = ({ children }: AuthModalProps) => {
           <Logo className="size-16" />
           <VStack>
             <DialogTitle className="text-primary text-xl">
-              Sign in to Toolkit
+              Sign in to {env.NEXT_PUBLIC_CHATBOT_NAME ?? "Toolkit"}
             </DialogTitle>
             <DialogDescription className="hidden">
-              Sign in to your account to get started with Toolkit.
+              Sign in to your account to get started with{" "}
+              {env.NEXT_PUBLIC_CHATBOT_NAME ?? "Toolkit"}.
             </DialogDescription>
           </VStack>
         </DialogHeader>

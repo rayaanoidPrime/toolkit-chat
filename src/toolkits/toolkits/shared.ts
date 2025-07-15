@@ -14,7 +14,6 @@ import type { notionParameters } from "./notion/base";
 import type { NotionTools } from "./notion/tools";
 import type { e2bParameters } from "./e2b/base";
 import type { E2BTools } from "./e2b/tools/tools";
-import { env } from "@/env";
 
 export enum Toolkits {
   Exa = "exa",
@@ -26,24 +25,6 @@ export enum Toolkits {
   Notion = "notion",
   E2B = "e2b",
 }
-
-const enabledToolkitIdsFromEnv: string[] = (
-  (env.CLIENT_AVAILABLE_TOOLKITS as string) || ""
-)
-  .split(",")
-  .map((id) => id.trim())
-  .filter(Boolean);
-
-const shouldEnableAllToolkits = enabledToolkitIdsFromEnv.length === 0;
-
-export const CLIENT_AVAILABLE_TOOLKIT_IDS = shouldEnableAllToolkits
-  ? (Object.values(Toolkits) as readonly Toolkits[])
-  : (enabledToolkitIdsFromEnv.filter((id): id is Toolkits =>
-      Object.values(Toolkits).includes(id as Toolkits),
-    ) as readonly Toolkits[]);
-
-export type ClientAvailableToolkits =
-  (typeof CLIENT_AVAILABLE_TOOLKIT_IDS)[number];
 
 export type ServerToolkitNames = {
   [Toolkits.Exa]: ExaTools;

@@ -17,6 +17,7 @@ interface Props {
   isReadonly: boolean;
   isNew: boolean;
   workbench?: Workbench;
+  chatbotName?: string;
 }
 
 export const Chat = async ({
@@ -25,6 +26,7 @@ export const Chat = async ({
   isReadonly,
   isNew,
   workbench,
+  chatbotName,
 }: Props) => {
   const initialMessages = isNew
     ? []
@@ -117,6 +119,7 @@ export const Chat = async ({
           id={id}
           isReadonly={isReadonly}
           hasInitialMessages={initialMessages.length > 0}
+          chatbotName={chatbotName}
         />
       </ChatProvider>
     </ChatLayout>
