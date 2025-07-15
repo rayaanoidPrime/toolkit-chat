@@ -403,8 +403,8 @@ export const StarterPrompts = () => {
 
   return (
     <div className="relative">
-      <div className="from-background absolute top-0 left-0 z-10 hidden h-full w-4 bg-gradient-to-r to-transparent md:block" />
-      <div className="no-scrollbar flex max-w-full flex-col gap-2 overflow-x-auto px-4 md:flex-row">
+      <div className="from-background absolute top-0 left-0 z-10 block h-full w-2 bg-gradient-to-r to-transparent md:w-4" />
+      <div className="no-scrollbar flex max-w-full flex-row gap-2 overflow-x-auto px-2 md:px-4">
         {relevantPrompts.map((prompt, index) => (
           <motion.button
             key={`${prompt.title}-${selectedToolkitIds.size}`} // Key includes toolkit state for proper re-animation
@@ -416,7 +416,7 @@ export const StarterPrompts = () => {
               exit: { delay: 0, duration: 0.1 },
             }}
             onClick={() => handlePromptClick(prompt.prompt)}
-            className="hover:bg-muted/80 text-muted-foreground hover:text-foreground group relative cursor-pointer rounded-xl border p-2 text-left text-sm transition-colors"
+            className="hover:bg-muted/80 text-muted-foreground hover:text-foreground group relative cursor-pointer rounded-xl border px-2 py-1 text-left text-sm transition-colors md:p-2"
             title={prompt.description}
           >
             <HStack className="gap-2 overflow-hidden">
@@ -428,7 +428,7 @@ export const StarterPrompts = () => {
           </motion.button>
         ))}
       </div>
-      <div className="from-background absolute top-0 right-0 z-10 hidden h-full w-4 bg-gradient-to-l to-transparent md:block" />
+      <div className="from-background absolute top-0 right-0 z-10 h-full w-2 bg-gradient-to-l to-transparent md:w-4" />
     </div>
   );
 };

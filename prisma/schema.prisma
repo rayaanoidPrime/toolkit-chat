@@ -80,6 +80,7 @@ model Chat {
     workbenchId  String?    // Optional association with workbench
     user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     parentChat   Chat?      @relation("ChatBranch", fields: [parentChatId], references: [id], onDelete: Cascade)
+    starred      Boolean    @default(false)
     branches     Chat[]     @relation("ChatBranch")
     messages     Message[]
     stream       Stream[]

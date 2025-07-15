@@ -17,6 +17,8 @@ export const ToolkitIcons = ({
   iconContainerClassName,
   iconClassName,
 }: Props) => {
+  if (toolkits.length === 0) return null;
+
   return (
     <div
       className={cn(
@@ -42,7 +44,9 @@ export const ToolkitIcons = ({
             )}
             key={toolkit}
           >
-            <Icon className={cn("text-primary size-4", iconClassName)} />
+            <Icon
+              className={cn("text-primary size-3 md:size-4", iconClassName)}
+            />
           </div>
         );
       })}

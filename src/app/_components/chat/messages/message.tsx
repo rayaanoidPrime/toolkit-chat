@@ -67,10 +67,13 @@ const PurePreviewMessage: React.FC<Props> = ({
           )}
         >
           <div
-            className={cn("flex w-full max-w-full flex-col gap-4", {
-              "min-h-96": message.role === "assistant" && requiresScrollPadding,
-              "w-0 flex-1": message.role === "assistant",
-            })}
+            className={cn(
+              "flex w-full max-w-full flex-col gap-4",
+              requiresScrollPadding &&
+                message.role === "assistant" &&
+                "min-h-24 md:min-h-96",
+              message.role === "assistant" && "w-0 flex-1",
+            )}
           >
             {message.experimental_attachments &&
               message.experimental_attachments.length > 0 && (
@@ -183,7 +186,7 @@ export const ThinkingMessage = () => {
   return (
     <motion.div
       data-testid="message-assistant-loading"
-      className="group/message mx-auto min-h-96 w-full max-w-3xl px-4"
+      className="group/message mx-auto min-h-24 w-full max-w-3xl px-4 md:min-h-96"
       initial={{ y: 5, opacity: 0 }}
       animate={{ y: 0, opacity: 1, transition: { delay: 0.5 } }}
       data-role={role}

@@ -4,6 +4,7 @@ import equal from "fast-deep-equal";
 import { PreviewMessage, ThinkingMessage } from "./message";
 import { useMessages } from "@/app/_hooks/use-messages";
 import { useChatContext } from "@/app/_contexts/chat-context";
+import { cn } from "@/lib/utils";
 
 interface Props {
   chatId: string;
@@ -47,7 +48,10 @@ const PureMessages: React.FC<Props> = ({
   return (
     <div
       ref={containerRef}
-      className="relative mb-20 flex h-full min-w-0 flex-1 flex-col gap-6 overflow-y-scroll py-8"
+      className={cn(
+        "relative flex h-full min-w-0 flex-1 flex-col gap-6 overflow-y-scroll py-8",
+        messages.length > 0 && "mb-20",
+      )}
     >
       {messages
         .filter(

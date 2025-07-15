@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { ToolkitIcons } from "@/components/toolkit/toolkit-icons";
 import { clientToolkits } from "@/toolkits/toolkits/client";
 import { LanguageModelCapability } from "@/ai/types";
+import { cn } from "@/lib/utils";
 
 export const ToolsSelect = () => {
   const { toolkits, addToolkit, removeToolkit, workbench, selectedChatModel } =
@@ -96,7 +97,10 @@ export const ToolsSelect = () => {
         <DialogTrigger asChild>
           <Button
             variant={"outline"}
-            className="w-fit justify-start bg-transparent md:w-auto md:px-2"
+            className={cn(
+              "w-fit justify-center bg-transparent md:w-auto md:px-2",
+              toolkits.length === 0 && "size-9 md:w-auto",
+            )}
             disabled={
               !selectedChatModel?.capabilities?.includes(
                 LanguageModelCapability.ToolCalling,
@@ -116,7 +120,10 @@ export const ToolsSelect = () => {
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="flex max-h-[80vh] w-full max-w-2xl flex-col gap-4 overflow-hidden">
+        <DialogContent
+          className="flex max-h-[80vh] w-full max-w-2xl flex-col gap-4 overflow-hidden"
+          showCloseButton={false}
+        >
           <DialogHeader className="gap-0">
             <DialogTitle className="text-xl">Manage Toolkits</DialogTitle>
             <DialogDescription>

@@ -54,13 +54,11 @@ export const ChatContent = ({
 
         {/* Input Container - absolutely positioned, contains greeting, input, and starter prompts */}
         <motion.div
-          initial={
-            hasInitialMessages ? { y: 0 } : { y: "calc(-50vh + 50% - 1rem)" }
-          }
+          initial={hasInitialMessages ? { y: 0 } : { y: "calc(-50vh + 50%)" }}
           animate={
             hasMessages || hasInitialMessages
               ? { y: 0 }
-              : { y: "calc(-50vh + 50% - 1rem)" }
+              : { y: "calc(-50vh + 50%)" }
           }
           transition={{
             type: "tween",
@@ -73,18 +71,17 @@ export const ChatContent = ({
           <AnimatePresence>
             {!hasMessages && !hasInitialMessages && (
               <motion.div
-                initial={{ opacity: 0, y: 10, marginBottom: "2rem" }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{
                   opacity: 1,
                   y: 0,
-                  marginBottom: "2rem",
                 }}
-                exit={{ opacity: 0, marginBottom: 0 }}
+                exit={{ opacity: 0 }}
                 transition={{
                   enter: { delay: 0.1, duration: 0.3 },
                   exit: { delay: 0, duration: 0.05 },
                 }}
-                className="flex flex-col items-center gap-4 pt-2 text-center"
+                className="mb-4 flex flex-col items-center gap-2 pt-2 text-center md:mb-8 md:gap-4"
               >
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -96,7 +93,7 @@ export const ChatContent = ({
                   {workbench ? (
                     <Anvil className="text-primary size-24" />
                   ) : (
-                    <Logo className="size-24" />
+                    <Logo className="size-12 md:size-24" />
                   )}
                 </motion.div>
                 <motion.h1
@@ -104,7 +101,7 @@ export const ChatContent = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ delay: 0.3, duration: 0.3 }}
-                  className="text-2xl font-bold md:text-3xl"
+                  className="text-xl font-bold md:text-3xl"
                 >
                   {workbench
                     ? `${workbench.name} Workbench`
@@ -128,19 +125,18 @@ export const ChatContent = ({
           <AnimatePresence>
             {!hasMessages && !hasInitialMessages && (
               <motion.div
-                initial={{ opacity: 0, marginTop: "1rem", height: "auto" }}
+                initial={{ opacity: 0, height: "auto" }}
                 animate={{
                   opacity: 1,
                   y: 0,
                   height: "auto",
-                  marginTop: "1rem",
                 }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                exit={{ opacity: 0, height: 0 }}
                 transition={{
                   enter: { delay: 0.4, duration: 0.3 },
                   exit: { delay: 0, duration: 0.1 },
                 }}
-                className="overflow-hidden"
+                className="mt-2 overflow-hidden md:mt-4"
               >
                 {!hasMessages && <StarterPrompts />}
               </motion.div>
