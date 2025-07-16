@@ -26,8 +26,8 @@ export const googleDriveToolkitServer = createServerToolkit(
 - Combine search results from multiple queries to get comprehensive document coverage
 - Use folder-based searches when documents are organized in specific directory structures`,
   async () => {
-    const keyFile = env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH as string;
-    const folderId = env.GOOGLE_DRIVE_FOLDER_ID as string;
+    const keyFile = env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH!;
+    const folderId = env.GOOGLE_DRIVE_FOLDER_ID!;
 
     if (!keyFile) {
       throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY_PATH is not set");

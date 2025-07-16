@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Anvil, ChevronsUpDown, Plus } from "lucide-react";
+import { Anvil, ChevronsUpDown } from "lucide-react";
 
 import {
   DropdownMenu,

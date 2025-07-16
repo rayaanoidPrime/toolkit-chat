@@ -9,7 +9,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenuButton,
   SidebarRail,
 } from "@/components/ui/sidebar";
 
@@ -18,8 +17,7 @@ import { NavChats } from "./chats";
 import { NavUser } from "./user";
 import { Logo } from "@/components/ui/logo";
 import Link from "next/link";
-import { HStack, VStack } from "@/components/ui/stack";
-import { SiGithub } from "@icons-pack/react-simple-icons";
+import { HStack } from "@/components/ui/stack";
 import { WorkbenchSelect } from "./workbench-select";
 
 export async function AppSidebar({
