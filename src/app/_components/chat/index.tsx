@@ -6,10 +6,13 @@ import type { Attachment, UIMessage } from "ai";
 import { languageModels } from "@/ai/models";
 import { ChatContent } from "./chat";
 import { serverCookieUtils } from "@/lib/cookies/server";
-import { clientToolkits } from "@/toolkits/toolkits/client";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
 import type { PersistedToolkit } from "@/lib/cookies/types";
+import {
+  AVAILABLE_TOOLKIT_IDS,
+  availableToolkits,
+} from "@/toolkits/toolkits/available-client";
 
 interface Props {
   id: string;
@@ -50,7 +53,9 @@ export const Chat = async ({
     toolkits: serverPreferences.toolkits
       ?.map((persistedToolkit: PersistedToolkit) => {
         const clientToolkit =
-          clientToolkits[persistedToolkit.id as keyof typeof clientToolkits];
+          availableToolkits[
+            persistedToolkit.id as keyof typeof availableToolkits
+          ];
         if (clientToolkit) {
           return {
             id: persistedToolkit.id,
@@ -114,12 +119,14 @@ export const Chat = async ({
         autoResume={!isNew}
         workbench={workbench}
         initialPreferences={initialPreferences}
+        availableToolkitIds={AVAILABLE_TOOLKIT_IDS}
       >
         <ChatContent
           id={id}
           isReadonly={isReadonly}
           hasInitialMessages={initialMessages.length > 0}
           chatbotName={chatbotName}
+          availableToolkitIds={AVAILABLE_TOOLKIT_IDS}
         />
       </ChatProvider>
     </ChatLayout>

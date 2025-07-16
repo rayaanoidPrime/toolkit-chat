@@ -39,18 +39,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { Toolkits } from "@/toolkits/toolkits/shared";
 
 interface Props {
   chatId: string;
   isAtBottom: boolean;
   scrollToBottom: () => void;
   className?: string;
+  availableToolkitIds: Toolkits[];
 }
 
 const PureMultimodalInput: React.FC<Props> = ({
   chatId,
   scrollToBottom,
   className,
+  availableToolkitIds,
 }) => {
   const {
     input,
@@ -450,7 +453,7 @@ const PureMultimodalInput: React.FC<Props> = ({
               disabledString={fileDisabledString}
             />
             <ModelSelect />
-            <ToolsSelect />
+            <ToolsSelect availableToolkitIds={availableToolkitIds} />
           </div>
 
           <div className="flex items-center">

@@ -24,7 +24,7 @@ import {
 } from "@/ai/types";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { allClientToolkits } from "@/toolkits/toolkits/client";
 import type { SelectedToolkit } from "@/components/toolkit/types";
 import type { Toolkits } from "@/toolkits/toolkits/shared";
 import type { Workbench } from "@prisma/client";
@@ -82,6 +82,7 @@ interface ChatProviderProps {
     useNativeSearch?: boolean;
     toolkits?: Array<PersistedToolkit>;
   };
+  availableToolkitIds?: Toolkits[];
 }
 
 export function ChatProvider({
@@ -92,6 +93,7 @@ export function ChatProvider({
   autoResume,
   workbench,
   initialPreferences,
+  availableToolkitIds,
 }: ChatProviderProps) {
   const utils = api.useUtils();
 
@@ -107,18 +109,19 @@ export function ChatProvider({
   >(initialPreferences?.imageGenerationModel);
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const [toolkits, setToolkitsState] = useState<Array<SelectedToolkit>>(() => {
-    // If this is a workbench chat, initialize with workbench toolkits
+    // If this is a workbench chat, initialize with workbench toolkits if available
     if (workbench) {
       return workbench.toolkitIds
         .map((toolkitId) => {
-          const clientToolkit =
-            clientToolkits[toolkitId as keyof typeof clientToolkits];
-          if (clientToolkit) {
-            return {
-              id: toolkitId,
-              toolkit: clientToolkit,
-              parameters: {}, // Use default parameters for workbench toolkits
-            };
+          if (availableToolkitIds?.includes(toolkitId as Toolkits)) {
+            const clientToolkit = allClientToolkits[toolkitId as Toolkits];
+            if (clientToolkit) {
+              return {
+                id: toolkitId,
+                toolkit: clientToolkit,
+                parameters: {},
+              };
+            }
           }
           return null;
         })
@@ -140,14 +143,18 @@ export function ChatProvider({
     ) {
       return initialPreferences.toolkits
         .map((persistedToolkit) => {
-          const clientToolkit =
-            clientToolkits[persistedToolkit.id as keyof typeof clientToolkits];
-          if (clientToolkit) {
-            return {
-              id: persistedToolkit.id,
-              toolkit: clientToolkit,
-              parameters: persistedToolkit.parameters,
-            };
+          if (availableToolkitIds?.includes(persistedToolkit.id as Toolkits)) {
+            const clientToolkit =
+              allClientToolkits[
+                persistedToolkit.id as keyof typeof allClientToolkits
+              ];
+            if (clientToolkit) {
+              return {
+                id: persistedToolkit.id,
+                toolkit: clientToolkit,
+                parameters: persistedToolkit.parameters,
+              };
+            }
           }
           return null;
         })
@@ -183,8 +190,11 @@ export function ChatProvider({
   };
 
   const setToolkits = (newToolkits: Array<SelectedToolkit>) => {
-    setToolkitsState(newToolkits);
-    clientCookieUtils.setToolkits(newToolkits);
+    const filtered = newToolkits.filter((t) =>
+      availableToolkitIds?.includes(t.id),
+    );
+    setToolkitsState(filtered);
+    clientCookieUtils.setToolkits(filtered);
   };
 
   const addToolkit = (toolkit: SelectedToolkit) => {

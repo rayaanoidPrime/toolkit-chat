@@ -12,17 +12,20 @@ import { Logo } from "@/components/ui/logo";
 import { useSearchParams } from "next/navigation";
 import { WelcomeDialog } from "../welcome-dialog";
 import { Anvil } from "lucide-react";
+import type { Toolkits } from "@/toolkits/toolkits/shared";
 
 export const ChatContent = ({
   id,
   isReadonly,
   hasInitialMessages,
   chatbotName,
+  availableToolkitIds,
 }: {
   id: string;
   isReadonly: boolean;
   hasInitialMessages: boolean;
   chatbotName?: string;
+  availableToolkitIds: Toolkits[];
 }) => {
   const searchParams = useSearchParams();
   const welcome = searchParams.get("welcome") === "true";
@@ -118,6 +121,7 @@ export const ChatContent = ({
               chatId={id}
               isAtBottom={isAtBottom}
               scrollToBottom={scrollToBottom}
+              availableToolkitIds={availableToolkitIds}
             />
           )}
 

@@ -21,24 +21,33 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { ToolkitIcons } from "@/components/toolkit/toolkit-icons";
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { allClientToolkits } from "@/toolkits/toolkits/client";
 import { LanguageModelCapability } from "@/ai/types";
 import { cn } from "@/lib/utils";
+import type { Toolkits } from "@/toolkits/toolkits/shared";
 
-export const ToolsSelect = () => {
+interface ToolSelectProps {
+  availableToolkitIds: Toolkits[];
+}
+
+export const ToolsSelect = ({ availableToolkitIds }: ToolSelectProps) => {
   const { toolkits, addToolkit, removeToolkit, workbench, selectedChatModel } =
     useChatContext();
   const searchParams = useSearchParams();
 
   const [isOpen, setIsOpen] = useState(
-    Object.keys(clientToolkits).some((toolkit) => searchParams.get(toolkit)),
+    Object.keys(allClientToolkits)
+      .filter((toolkit) => availableToolkitIds?.includes(toolkit as Toolkits))
+      .some((toolkit) => searchParams.get(toolkit)),
   );
   const router = useRouter();
 
   useEffect(() => {
     if (
       !isOpen &&
-      Object.keys(clientToolkits).some((toolkit) => searchParams.get(toolkit))
+      Object.keys(allClientToolkits)
+        .filter((toolkit) => availableToolkitIds?.includes(toolkit as Toolkits))
+        .some((toolkit) => searchParams.get(toolkit))
     ) {
       setIsOpen(true);
     }
@@ -135,6 +144,7 @@ export const ToolsSelect = () => {
               selectedToolkits={toolkits}
               onAddToolkit={addToolkit}
               onRemoveToolkit={removeToolkit}
+              availableToolkitIds={availableToolkitIds}
             />
           </div>
           {workbench !== undefined && (

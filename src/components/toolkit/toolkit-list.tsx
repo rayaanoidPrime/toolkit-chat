@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Plus, Info } from "lucide-react";
 import { HStack, VStack } from "@/components/ui/stack";
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { allClientToolkits } from "@/toolkits/toolkits/client";
 import type { ClientToolkit } from "@/toolkits/types";
 import type { Toolkits } from "@/toolkits/toolkits/shared";
 import { ClientToolkitConfigure } from "@/components/toolkit/toolkit-configure";
@@ -25,20 +25,24 @@ interface ToolkitListProps {
   selectedToolkits: SelectedToolkit[];
   onAddToolkit: (toolkit: SelectedToolkit) => void;
   onRemoveToolkit: (id: Toolkits) => void;
+  availableToolkitIds?: Toolkits[];
 }
 
 export const ToolkitList: React.FC<ToolkitListProps> = ({
   selectedToolkits,
   onAddToolkit,
   onRemoveToolkit,
+  availableToolkitIds,
 }) => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    const updatedToolkits = Object.entries(clientToolkits).filter(([id]) => {
+    const updatedToolkits = Object.entries(allClientToolkits).filter(([id]) => {
       return (
+        (!availableToolkitIds ||
+          availableToolkitIds.includes(id as Toolkits)) &&
         searchParams.get(id) === "true" &&
         !selectedToolkits.some((t) => t.id === (id as Toolkits))
       );
@@ -54,12 +58,27 @@ export const ToolkitList: React.FC<ToolkitListProps> = ({
       });
       window.history.replaceState({}, "", pathname);
     }
-  }, [searchParams, onAddToolkit, selectedToolkits, router, pathname]);
+  }, [
+    searchParams,
+    onAddToolkit,
+    selectedToolkits,
+    router,
+    pathname,
+    availableToolkitIds,
+  ]);
 
   return (
     <TooltipProvider>
       <VStack className="w-full items-start gap-4">
         {toolkitGroups.map((group) => {
+          const groupToolkits = Object.entries(allClientToolkits)
+            .filter(([, toolkit]) => toolkit?.type === group.id)
+            .filter(
+              ([id]) =>
+                !availableToolkitIds ||
+                availableToolkitIds.includes(id as Toolkits),
+            );
+          if (groupToolkits.length === 0) return null;
           return (
             <VStack key={group.id} className="w-full items-start">
               <HStack className="gap-2">
@@ -67,21 +86,19 @@ export const ToolkitList: React.FC<ToolkitListProps> = ({
                 <h3 className="font-bold">{group.name}</h3>
               </HStack>
               <div className="bg-muted/50 w-full rounded-md border">
-                {Object.entries(clientToolkits)
-                  .filter(([, toolkit]) => toolkit?.type === group.id)
-                  .map(([id, toolkit]) => {
-                    if (!toolkit) return null;
-                    return (
-                      <ToolkitItem
-                        key={id}
-                        id={id as Toolkits}
-                        toolkit={toolkit as ClientToolkit}
-                        selectedToolkits={selectedToolkits}
-                        onAddToolkit={onAddToolkit}
-                        onRemoveToolkit={onRemoveToolkit}
-                      />
-                    );
-                  })}
+                {groupToolkits.map(([id, toolkit]) => {
+                  if (!toolkit) return null;
+                  return (
+                    <ToolkitItem
+                      key={id}
+                      id={id as Toolkits}
+                      toolkit={toolkit as ClientToolkit}
+                      selectedToolkits={selectedToolkits}
+                      onAddToolkit={onAddToolkit}
+                      onRemoveToolkit={onRemoveToolkit}
+                    />
+                  );
+                })}
               </div>
             </VStack>
           );
