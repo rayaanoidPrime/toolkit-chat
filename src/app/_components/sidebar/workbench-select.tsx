@@ -140,14 +140,14 @@ export function WorkbenchSelect() {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <Link href="/workbench/new">
+              {/* <Link href="/workbench/new">
                 <DropdownMenuItem className="gap-2 p-2">
                   <Plus className="size-4" />
                   <div className="text-muted-foreground font-medium">
                     New Workbench
                   </div>
                 </DropdownMenuItem>
-              </Link>
+              </Link> */}
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
