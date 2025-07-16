@@ -4,7 +4,7 @@ import { languageModels } from "@/ai/models";
 import { MESSAGE_MAX_LENGTH, FILE_NAME_MAX_LENGTH } from "@/lib/constants";
 
 import { Toolkits } from "@/toolkits/toolkits/shared";
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { allClientToolkits } from "@/toolkits/toolkits/client";
 
 const textPartSchema = z.object({
   text: z.string().min(1).max(MESSAGE_MAX_LENGTH),
@@ -51,10 +51,12 @@ export const postRequestBodySchema = z.object({
         parameters: z.record(z.string(), z.any()),
       })
       .refine((toolkit) => {
-        return toolkit.id in clientToolkits;
+        return toolkit.id in allClientToolkits;
       })
       .refine((toolkit) => {
-        return clientToolkits[toolkit.id].parameters?.parse(toolkit.parameters);
+        return allClientToolkits[toolkit.id].parameters?.parse(
+          toolkit.parameters,
+        );
       }),
   ),
 });

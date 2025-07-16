@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Anvil, Plus } from "lucide-react";
 import { ToolkitIcons } from "@/components/toolkit/toolkit-icons";
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { allClientToolkits } from "@/toolkits/toolkits/client";
 
 export function NewWorkbenchForm() {
   const router = useRouter();
@@ -159,7 +159,9 @@ export function NewWorkbenchForm() {
                           </p>
                         </HStack>
                         <ToolkitIcons
-                          toolkits={Object.keys(clientToolkits) as Toolkits[]}
+                          toolkits={
+                            Object.keys(allClientToolkits) as Toolkits[]
+                          }
                           iconContainerClassName="bg-background"
                           iconClassName="text-muted-foreground"
                         />

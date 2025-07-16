@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Anvil, Plus } from "lucide-react";
 import { ToolkitIcons } from "@/components/toolkit/toolkit-icons";
-import { clientToolkits } from "@/toolkits/toolkits/client";
+import { allClientToolkits } from "@/toolkits/toolkits/client";
 import { getClientToolkit } from "@/toolkits/toolkits/client";
 import type { Workbench } from "@prisma/client";
 
@@ -172,7 +172,9 @@ export function EditWorkbenchForm({ workbench }: EditWorkbenchFormProps) {
                           </p>
                         </HStack>
                         <ToolkitIcons
-                          toolkits={Object.keys(clientToolkits) as Toolkits[]}
+                          toolkits={
+                            Object.keys(allClientToolkits) as Toolkits[]
+                          }
                           iconContainerClassName="bg-background"
                           iconClassName="text-muted-foreground"
                         />
