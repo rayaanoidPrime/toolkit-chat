@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -9,53 +8,55 @@ import {
   AlertDialogDescription,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { Toolkits } from "@/toolkits/toolkits/shared";
+import type { Toolkits } from "@/toolkits/toolkits/shared";
 import { ToolkitList } from "@/components/toolkit/toolkit-list";
 import { ArrowRight } from "lucide-react";
-import { getClientToolkit } from "@/toolkits/toolkits/client";
-import type { ClientToolkit } from "@/toolkits/types";
 import { useChatContext } from "@/app/_contexts/chat-context";
 import { usePathname, useRouter } from "next/navigation";
 
-export function WelcomeDialog() {
+export function WelcomeDialog({
+  availableToolkitIds,
+}: {
+  availableToolkitIds: Toolkits[];
+}) {
   const { toolkits, addToolkit, removeToolkit } = useChatContext();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Set default toolkits when dialog opens
-  useEffect(() => {
-    if (toolkits.length === 0) {
-      // Add the default toolkits from the original onboarding page
-      const defaultToolkits = [
-        {
-          id: Toolkits.Image,
-          toolkit: getClientToolkit(Toolkits.Image) as ClientToolkit,
-          parameters: {
-            model: "xai:grok-2-image",
-          },
-        },
-        {
-          id: Toolkits.Exa,
-          toolkit: getClientToolkit(Toolkits.Exa) as ClientToolkit,
-          parameters: {},
-        },
-        {
-          id: Toolkits.E2B,
-          toolkit: getClientToolkit(Toolkits.E2B) as ClientToolkit,
-          parameters: {},
-        },
-        {
-          id: Toolkits.Memory,
-          toolkit: getClientToolkit(Toolkits.Memory) as ClientToolkit,
-          parameters: {},
-        },
-      ];
+  // // Set default toolkits when dialog opens
+  // useEffect(() => {
+  //   if (toolkits.length === 0) {
+  //     // Add the default toolkits from the original onboarding page
+  //     const defaultToolkits = [
+  //       {
+  //         id: Toolkits.Image,
+  //         toolkit: getClientToolkit(Toolkits.Image) as ClientToolkit,
+  //         parameters: {
+  //           model: "xai:grok-2-image",
+  //         },
+  //       },
+  //       {
+  //         id: Toolkits.Exa,
+  //         toolkit: getClientToolkit(Toolkits.Exa) as ClientToolkit,
+  //         parameters: {},
+  //       },
+  //       {
+  //         id: Toolkits.E2B,
+  //         toolkit: getClientToolkit(Toolkits.E2B) as ClientToolkit,
+  //         parameters: {},
+  //       },
+  //       {
+  //         id: Toolkits.Memory,
+  //         toolkit: getClientToolkit(Toolkits.Memory) as ClientToolkit,
+  //         parameters: {},
+  //       },
+  //     ];
 
-      defaultToolkits.forEach((toolkit) => {
-        addToolkit(toolkit);
-      });
-    }
-  }, [toolkits.length, addToolkit]);
+  //     defaultToolkits.forEach((toolkit) => {
+  //       addToolkit(toolkit);
+  //     });
+  //   }
+  // }, [toolkits.length, addToolkit]);
 
   return (
     <AlertDialog defaultOpen>
@@ -81,6 +82,7 @@ export function WelcomeDialog() {
 
         <div className="h-0 flex-1 overflow-y-auto">
           <ToolkitList
+            availableToolkitIds={availableToolkitIds}
             selectedToolkits={toolkits}
             onAddToolkit={addToolkit}
             onRemoveToolkit={removeToolkit}

@@ -148,7 +148,7 @@ export const ChatContent = ({
           </AnimatePresence>
         </motion.div>
       </div>
-      {welcome && <WelcomeDialog />}
+      {welcome && <WelcomeDialog availableToolkitIds={availableToolkitIds} />}
     </>
   );
 };
