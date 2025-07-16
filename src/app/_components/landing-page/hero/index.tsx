@@ -21,7 +21,7 @@ export const HeroSection: React.FC = () => {
           >
             <VStack className="items-center md:items-end">
               <Badge variant="primary" className="text-lg">
-                FutureStack Chat
+                Futurelab Chat
               </Badge>
               <h1 className="from-foreground to-foreground/80 bg-gradient-to-r bg-clip-text text-center text-4xl leading-tight font-bold text-transparent md:text-right md:text-6xl">
                 <span className="from-primary to-primary/70 bg-gradient-to-r bg-clip-text text-center text-transparent md:text-right">

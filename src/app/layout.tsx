@@ -19,7 +19,7 @@ import { env } from "@/env";
 
 export const metadata: Metadata = {
   title: env.NEXT_PUBLIC_CHATBOT_NAME! ?? "Toolkit.dev",
-  description: "A highly-configurable chat client",
+  description: "A highly-configurable chat platform by Futurelab Studios",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
