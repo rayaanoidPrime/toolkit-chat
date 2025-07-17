@@ -26,7 +26,7 @@ import type { ClientToolkit } from "@/toolkits/types";
 import type { z } from "zod";
 import { allClientToolkits } from "@/toolkits/toolkits/client";
 import type { SelectedToolkit } from "@/components/toolkit/types";
-import type { Toolkits } from "@/toolkits/toolkits/shared";
+import { Toolkits } from "@/toolkits/toolkits/shared";
 import type { Workbench } from "@prisma/client";
 import { anthropicModels } from "@/ai/models/anthropic";
 import type { PersistedToolkit } from "@/lib/cookies/types";
@@ -109,68 +109,90 @@ export function ChatProvider({
   >(initialPreferences?.imageGenerationModel);
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const [toolkits, setToolkitsState] = useState<Array<SelectedToolkit>>(() => {
-    // If this is a workbench chat, initialize with workbench toolkits if available
-    if (workbench) {
-      return workbench.toolkitIds
-        .map((toolkitId) => {
-          if (availableToolkitIds?.includes(toolkitId as Toolkits)) {
-            const clientToolkit = allClientToolkits[toolkitId as Toolkits];
-            if (clientToolkit) {
-              return {
-                id: toolkitId,
-                toolkit: clientToolkit,
-                parameters: {},
-              };
-            }
+  // If this is a workbench chat, initialize with workbench toolkits if available
+  if (workbench) {
+    const workbenchToolkits = [
+      ...workbench.toolkitIds.map((toolkitId) => {
+        if (availableToolkitIds?.includes(toolkitId as Toolkits)) {
+          const clientToolkit = allClientToolkits[toolkitId as Toolkits];
+          if (clientToolkit) {
+            return {
+              id: toolkitId,
+              toolkit: clientToolkit,
+              parameters: {},
+            };
           }
-          return null;
-        })
-        .filter(
-          (
-            toolkit,
-          ): toolkit is {
-            id: Toolkits;
-            toolkit: ClientToolkit;
-            parameters: z.infer<ClientToolkit["parameters"]>;
-          } => toolkit !== null,
-        );
-    }
+        }
+        return null;
+      }),
+      {
+        id: Toolkits.GoogleDrive,
+        toolkit: allClientToolkits[Toolkits.GoogleDrive],
+        parameters: {},
+      },
+    ].filter(
+      (
+        toolkit,
+      ): toolkit is {
+        id: Toolkits;
+        toolkit: ClientToolkit;
+        parameters: z.infer<ClientToolkit["parameters"]>;
+      } => toolkit !== null,
+    );
 
-    // Restore toolkits by matching persisted ones with available client toolkits
-    if (
-      initialPreferences?.toolkits &&
-      initialPreferences.toolkits.length > 0
-    ) {
-      return initialPreferences.toolkits
-        .map((persistedToolkit) => {
-          if (availableToolkitIds?.includes(persistedToolkit.id as Toolkits)) {
-            const clientToolkit =
-              allClientToolkits[
-                persistedToolkit.id as keyof typeof allClientToolkits
-              ];
-            if (clientToolkit) {
-              return {
-                id: persistedToolkit.id,
-                toolkit: clientToolkit,
-                parameters: persistedToolkit.parameters,
-              };
-            }
+    return workbenchToolkits;
+  }
+
+  // Restore toolkits by matching persisted ones with available client toolkits
+  if (
+    initialPreferences?.toolkits &&
+    initialPreferences.toolkits.length > 0
+  ) {
+    const restoredToolkits = [
+      ...initialPreferences.toolkits.map((persistedToolkit) => {
+        if (availableToolkitIds?.includes(persistedToolkit.id as Toolkits)) {
+          const clientToolkit =
+            allClientToolkits[
+              persistedToolkit.id as keyof typeof allClientToolkits
+            ];
+          if (clientToolkit) {
+            return {
+              id: persistedToolkit.id,
+              toolkit: clientToolkit,
+              parameters: persistedToolkit.parameters,
+            };
           }
-          return null;
-        })
-        .filter(
-          (
-            toolkit,
-          ): toolkit is {
-            id: Toolkits;
-            toolkit: ClientToolkit;
-            parameters: z.infer<ClientToolkit["parameters"]>;
-          } => toolkit !== null,
-        );
-    }
+        }
+        return null;
+      }),
+      {
+        id: Toolkits.GoogleDrive,
+        toolkit: allClientToolkits[Toolkits.GoogleDrive],
+        parameters: {},
+      },
+    ].filter(
+      (
+        toolkit,
+      ): toolkit is {
+        id: Toolkits;
+        toolkit: ClientToolkit;
+        parameters: z.infer<ClientToolkit["parameters"]>;
+      } => toolkit !== null,
+    );
 
-    return [];
-  });
+    return restoredToolkits;
+  }
+
+  // Fallback to just Google Drive toolkit if nothing else
+  return [
+    {
+      id: Toolkits.GoogleDrive,
+      toolkit: allClientToolkits[Toolkits.GoogleDrive],
+      parameters: allClientToolkits[Toolkits.GoogleDrive].parameters.parse({}),
+    },
+  ];
+});
+
   const [hasInvalidated, setHasInvalidated] = useState(false);
 
   // Wrapper functions that also save to cookies
