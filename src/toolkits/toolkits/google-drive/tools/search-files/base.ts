@@ -1,23 +1,42 @@
+// Enhanced search-files/base.ts with better search capabilities
 import { z } from "zod";
 import { createBaseTool } from "@/toolkits/create-tool";
 
 export const searchFilesTool = createBaseTool({
-  description: "Search for files in Google Drive using query terms",
+  description: "Search for files in Google Drive using query terms with recursive folder traversal",
   inputSchema: z.object({
-    query: z.string().describe("Search query to find files"),
+    query: z.string().describe("Search query to find files (searches both filename and content)"),
     pageToken: z
       .string()
-      .describe(
-        "Token for the next page of results (leave blank for first page)",
-      ),
+      .optional()
+      .describe("Token for the next page of results (leave blank for first page)"),
     pageSize: z
       .number()
+      .optional()
+      .default(10)
       .describe("Number of results per page (max 100, default: 10)"),
     mimeType: z
       .string()
-      .describe(
-        "Filter by MIME type (e.g., 'application/pdf', 'image/jpeg') (leave blank for all types)",
-      ),
+      .optional()
+      .describe("Filter by MIME type (e.g., 'application/pdf', 'image/jpeg', 'application/vnd.google-apps.document') (leave blank for all types)"),
+    recursive: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe("Whether to search recursively in subfolders (default: true)"),
+    nameOnly: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe("Search only in file names, not content (faster and more reliable)"),
+    modifiedSince: z
+      .string()
+      .optional()
+      .describe("Only return files modified after this date (ISO format: YYYY-MM-DD)"),
+    fileTypes: z
+      .array(z.enum(["document", "spreadsheet", "presentation", "pdf", "image", "video", "audio", "folder", "other"]))
+      .optional()
+      .describe("Filter by file types (more user-friendly than mimeType)"),
   }),
   outputSchema: z.object({
     files: z.array(
@@ -40,6 +59,7 @@ export const searchFilesTool = createBaseTool({
           .optional()
           .describe("File owners"),
         parents: z.array(z.string()).optional().describe("Parent folder IDs"),
+        path: z.string().optional().describe("Full path to the file"),
       }),
     ),
     nextPageToken: z
@@ -50,5 +70,13 @@ export const searchFilesTool = createBaseTool({
       .boolean()
       .optional()
       .describe("Whether the search was incomplete due to limitations"),
+    searchStats: z
+      .object({
+        totalFound: z.number().describe("Total number of files found"),
+        foldersSearched: z.number().describe("Number of folders searched"),
+        searchDuration: z.number().describe("Search duration in milliseconds"),
+      })
+      .optional()
+      .describe("Statistics about the search operation"),
   }),
 });
