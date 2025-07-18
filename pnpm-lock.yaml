@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  pdf-parse:
+    hash: 2b6039e5494dd480760a84f594dd040f46bb2663ddbd058dad41413f49fccd37
+    path: patches/pdf-parse.patch
+
 importers:
 
   .:
@@ -175,7 +180,7 @@ importers:
         version: 5.0.3
       pdf-parse:
         specifier: ^1.1.1
-        version: 1.1.1
+        version: 1.1.1(patch_hash=2b6039e5494dd480760a84f594dd040f46bb2663ddbd058dad41413f49fccd37)
       react:
         specifier: ^19.0.0
         version: 19.1.0
@@ -258,6 +263,9 @@ importers:
       postcss:
         specifier: ^8.5.3
         version: 8.5.4
+      postinstall-postinstall:
+        specifier: ^2.1.0
+        version: 2.1.0
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
@@ -4496,6 +4504,9 @@ packages:
 
   postgres-range@1.1.4:
     resolution: {integrity: sha512-i/hbxIE9803Alj/6ytL7UHQxRvZkI9O4Sy+J3HGc4F4oo/2eQAjTSNJ0bfxyse3bH0nuVesCk+3IRLaMtG3H6w==}
+
+  postinstall-postinstall@2.1.0:
+    resolution: {integrity: sha512-7hQX6ZlZXIoRiWNrbMQaLzUUfH+sSx39u8EJ9HYuDc1kLo9IXKWjM5RSquZN1ad5GnH8CGFM78fsAAQi3OKEEQ==}
 
   preact-render-to-string@5.2.3:
     resolution: {integrity: sha512-aPDxUn5o3GhWdtJtW0svRC2SS/l8D9MAgo2+AWml+BhDImb27ALf04Q2d+AHqUUOc6RdSXFIBVa2gxzgMKgtZA==}
@@ -10057,7 +10068,7 @@ snapshots:
 
   path-to-regexp@8.2.0: {}
 
-  pdf-parse@1.1.1:
+  pdf-parse@1.1.1(patch_hash=2b6039e5494dd480760a84f594dd040f46bb2663ddbd058dad41413f49fccd37):
     dependencies:
       debug: 3.2.7
       node-ensure: 0.0.0
@@ -10158,6 +10169,8 @@ snapshots:
   postgres-interval@3.0.0: {}
 
   postgres-range@1.1.4: {}
+
+  postinstall-postinstall@2.1.0: {}
 
   preact-render-to-string@5.2.3(preact@10.11.3):
     dependencies:
