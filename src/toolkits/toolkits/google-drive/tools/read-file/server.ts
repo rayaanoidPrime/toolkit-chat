@@ -8,6 +8,102 @@ import { Readable } from "stream";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { generateText } from "@/ai/generate";
+
+// Helper function to summarize content using LLM
+async function summarizeContent(
+  content: string,
+  fileName: string,
+  searchContext: string,
+  cumulativeFindings?: string,
+): Promise<{
+  summary: string;
+  cumulativeSummary: string;
+  shouldContinueReading: boolean;
+}> {
+  const prompt = `SEARCH CONTEXT: "${searchContext}"
+FILE NAME: ${fileName}
+CUMULATIVE FINDINGS SO FAR: ${cumulativeFindings ?? "None yet"}
+
+FILE CONTENT:
+${content}
+
+Please provide:
+1. A comprehensive summary of this file focusing on information relevant to the search context
+2. An updated cumulative summary that combines this file's insights with previous findings
+3. A recommendation on whether to continue reading more files
+`;
+
+  try {
+    const response = await generateText("google/gemini-2.5-flash-lite", {
+      system: `You are helping summarize file content for a user search query.
+
+Guidelines:
+- Focus on information directly relevant to the search context
+- Be concise but comprehensive
+- Treat "CUMULATIVE FINDINGS SO FAR" as a running summary of relevant insights from previously analyzed files
+- Use it to avoid repeating information already captured
+- Update it with new insights from the current file
+- Highlight unique insights not already covered in cumulative findings
+- Recommend continuing if significant gaps remain or if this file suggests other relevant files exist
+- Recommend stopping if the search context appears well-covered
+
+Respond with ONLY a JSON object (no markdown formatting or code blocks):
+{
+  "summary": "comprehensive summary of this file's relevant content",
+  "cumulativeSummary": "updated summary combining all files read so far", 
+  "shouldContinueReading": true/false,
+}
+`,
+      prompt: prompt,
+    });
+
+    const responseContent = response.text ?? "{}";
+
+    // Clean the response by removing markdown code blocks if present
+    let cleanedResponse = responseContent
+      .replace(/^```json\s*/i, "") // Remove opening ```json
+      .replace(/\s*```\s*$/i, "") // Remove closing ```
+      .trim();
+
+    // Additional fallback: try to extract JSON from anywhere in the response
+    if (!cleanedResponse.startsWith("{")) {
+      const jsonMatch = /\{[\s\S]*\}/.exec(responseContent);
+      if (jsonMatch) {
+        cleanedResponse = jsonMatch[0];
+      }
+    }
+
+    const result = JSON.parse(cleanedResponse) as {
+      summary?: string;
+      cumulativeSummary?: string;
+      shouldContinueReading?: boolean;
+    };
+
+    return {
+      summary: result.summary ?? "Unable to generate summary",
+      cumulativeSummary:
+        result.cumulativeSummary ??
+        result.summary ??
+        "Unable to generate cumulative summary",
+      shouldContinueReading: result.shouldContinueReading ?? true,
+    };
+  } catch (error) {
+    console.error("Error in summarization:", error);
+
+    // Fallback: return truncated content as summary
+    const truncatedContent =
+      content.length > 2000 ? content.substring(0, 2000) + "..." : content;
+
+    return {
+      summary: `[Summarization failed] Content preview: ${truncatedContent}`,
+      cumulativeSummary: cumulativeFindings
+        ? `${cumulativeFindings}\n\nFrom ${fileName}: ${truncatedContent}`
+        : `From ${fileName}: ${truncatedContent}`,
+      shouldContinueReading: true,
+    };
+  }
+}
 
 // Helper function similar to Python's export_gdrive_file
 async function exportGdriveFile(
@@ -23,6 +119,17 @@ async function exportGdriveFile(
     "application/vnd.google-apps.spreadsheet":
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/vnd.google-apps.presentation":
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    // Spreadsheet MIME types
+    "application/vnd.ms-excel":
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv": "text/csv",
+    // Presentation MIME types
+    "application/vnd.ms-powerpoint":
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation":
       "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   };
 
@@ -86,7 +193,12 @@ export const googleDriveReadFileToolConfigServer = (
   typeof readFileTool.outputSchema.shape
 > => {
   return {
-    callback: async ({ fileId, exportFormat }) => {
+    callback: async ({
+      fileId,
+      exportFormat,
+      searchContext,
+      cumulativeFindings,
+    }) => {
       const auth = new google.auth.GoogleAuth({
         keyFile: keyFile,
         scopes: ["https://www.googleapis.com/auth/drive.readonly"],
@@ -104,7 +216,9 @@ export const googleDriveReadFileToolConfigServer = (
         const fileName = fileMetadata.data.name!;
         const mimeType = fileMetadata.data.mimeType!;
 
-        console.log(`Reading file: ${fileName} (${mimeType})`);
+        console.log(
+          `Reading file: ${fileName} (${mimeType}) for context: ${searchContext}`,
+        );
 
         // Use the helper function to handle file export/download
         const {
@@ -307,6 +421,14 @@ export const googleDriveReadFileToolConfigServer = (
           }
         }
 
+        // Use the summarizeContent function to get the required fields
+        const summaryResult = await summarizeContent(
+          processedContent,
+          fileName,
+          searchContext,
+          cumulativeFindings,
+        );
+
         const contentSize = Buffer.byteLength(
           processedContent,
           encoding === "base64" ? "base64" : "utf-8",
@@ -317,7 +439,9 @@ export const googleDriveReadFileToolConfigServer = (
         );
 
         return {
-          content: processedContent,
+          summary: summaryResult.summary,
+          cumulativeSummary: summaryResult.cumulativeSummary,
+          shouldContinueReading: summaryResult.shouldContinueReading,
           mimeType: resultMimeType,
           fileName,
           size: contentSize,

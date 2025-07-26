@@ -10,9 +10,30 @@ export const readFileTool = createBaseTool({
       .describe(
         "Export format for Google Workspace files (e.g., 'text/plain', 'text/csv', 'text/markdown') (leave blank for auto-detection)",
       ),
+    searchContext: z
+      .string()
+      .describe("Original search query/intent for focused summarization"),
+    cumulativeFindings: z
+      .string()
+      .optional()
+      .describe("Summary of previous files read"),
   }),
   outputSchema: z.object({
-    content: z.string().describe("File content as text"),
+    summary: z
+      .string()
+      .describe(
+        "Comprehensive summary containing all key insights and relevant information from this file",
+      ),
+    cumulativeSummary: z
+      .string()
+      .describe(
+        "Updated cumulative summary incorporating findings from all files read so far",
+      ),
+    shouldContinueReading: z
+      .boolean()
+      .describe(
+        "Recommendation to continue reading more files based on information completeness",
+      ),
     mimeType: z.string().describe("MIME type of the content"),
     fileName: z.string().describe("Name of the file"),
     size: z.number().optional().describe("Size of the content in bytes"),
