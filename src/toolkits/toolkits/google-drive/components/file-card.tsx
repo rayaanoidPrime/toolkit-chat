@@ -69,9 +69,10 @@ const getMimeTypeLabel = (mimeType: string) => {
     "video/mp4": "MP4",
     "audio/mp3": "MP3",
   };
-
   return (
-    mimeTypeLabels[mimeType] ?? mimeType.split("/")[1]?.toUpperCase() ?? "File"
+    mimeTypeLabels[mimeType] ??
+    mimeType?.split(".").pop()?.toUpperCase() ??
+    "File"
   );
 };
 

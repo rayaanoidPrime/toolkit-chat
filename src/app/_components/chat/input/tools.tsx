@@ -35,6 +35,10 @@ export const ToolsSelect = ({ availableToolkitIds }: ToolSelectProps) => {
     useChatContext();
   const searchParams = useSearchParams();
 
+  const availableToolkits = toolkits.filter((toolkit) =>
+    availableToolkitIds.includes(toolkit.id),
+  );
+
   const [isOpen, setIsOpen] = useState(
     Object.keys(allClientToolkits)
       .filter((toolkit) => availableToolkitIds?.includes(toolkit as Toolkits))
@@ -116,14 +120,16 @@ export const ToolsSelect = ({ availableToolkitIds }: ToolSelectProps) => {
               )
             }
           >
-            {toolkits.length > 0 ? (
-              <ToolkitIcons toolkits={toolkits.map((toolkit) => toolkit.id)} />
+            {availableToolkits.length > 0 ? (
+              <ToolkitIcons
+                toolkits={availableToolkits.map((toolkit) => toolkit.id)}
+              />
             ) : (
               <Wrench />
             )}
             <span className="hidden md:block">
-              {toolkits.length > 0
-                ? `${toolkits.length} Toolkit${toolkits.length > 1 ? "s" : ""}`
+              {availableToolkits.length > 0
+                ? `${availableToolkits.length} Toolkit${availableToolkits.length > 1 ? "s" : ""}`
                 : "Add Toolkits"}
             </span>
           </Button>
