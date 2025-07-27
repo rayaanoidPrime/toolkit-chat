@@ -113,6 +113,7 @@ async function exportGdriveFile(
   fileId: string,
   exportFormat?: string,
 ) {
+  // Only Google Docs Editors files can be exported
   const supportedExportDocsMimeTypes = {
     "application/vnd.google-apps.document":
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -120,25 +121,21 @@ async function exportGdriveFile(
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/vnd.google-apps.presentation":
       "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    // Spreadsheet MIME types
-    "application/vnd.ms-excel":
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "text/csv": "text/csv",
-    // Presentation MIME types
-    "application/vnd.ms-powerpoint":
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   };
 
-  if (mimeType in supportedExportDocsMimeTypes) {
+  // Use export only for Google Docs Editors files
+  if (mimeType.startsWith("application/vnd.google-apps.")) {
     const exportMimeType =
       exportFormat ??
       supportedExportDocsMimeTypes[
         mimeType as keyof typeof supportedExportDocsMimeTypes
       ];
+
+    if (!exportMimeType) {
+      throw new Error(
+        `Export not supported for Google Docs file type: ${mimeType}`,
+      );
+    }
 
     try {
       const response = await drive.files.export({

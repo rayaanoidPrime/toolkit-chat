@@ -1,6 +1,7 @@
 import { type searchFilesTool } from "./base";
-import { google } from "googleapis";
+import { drive_v3, google } from "googleapis";
 import type { ServerToolConfig } from "@/toolkits/types";
+import { DirectoryCache } from "../../cache/DirectoryCache";
 
 export const googleDriveSearchFilesToolConfigServer = (
   keyFile: string,
@@ -9,6 +10,8 @@ export const googleDriveSearchFilesToolConfigServer = (
   typeof searchFilesTool.inputSchema.shape,
   typeof searchFilesTool.outputSchema.shape
 > => {
+  const directoryCache = new DirectoryCache();
+
   return {
     callback: async ({
       query,
@@ -28,6 +31,9 @@ export const googleDriveSearchFilesToolConfigServer = (
       });
 
       const drive = google.drive({ version: "v3", auth });
+
+      // Initialize cache
+      await directoryCache.initialize();
 
       // Helper function to get file type MIME types
       const getFileTypeMimeTypes = (types?: string[]): string[] => {
@@ -74,120 +80,51 @@ export const googleDriveSearchFilesToolConfigServer = (
         return types.flatMap((type) => mimeTypeMap[type] ?? []);
       };
 
-      // Build folder cache for path resolution
-      const folderCache = new Map<
-        string,
-        { name: string; parents?: string[] }
-      >();
-
-      // Helper function to get folder info and cache it
-      const getFolderInfo = async (folderId: string) => {
-        if (folderCache.has(folderId)) {
-          return folderCache.get(folderId)!;
-        }
+      const performFileSearch = async (
+        searchQuery: string,
+        options: {
+          folderId?: string;
+          pageToken?: string;
+          pageSize: number;
+          orderBy?: string;
+        },
+      ) => {
+        const finalQuery = options.folderId
+          ? `${searchQuery} and '${options.folderId}' in parents`
+          : searchQuery;
 
         try {
-          const response = await drive.files.get({
-            fileId: folderId,
-            fields: "id, name, parents",
+          const response = await drive.files.list({
+            q: finalQuery,
+            pageToken: options.pageToken,
+            pageSize: options.pageSize,
+            fields:
+              "nextPageToken, incompleteSearch, files(id, name, mimeType, size, modifiedTime, createdTime, webViewLink, iconLink, owners(displayName, emailAddress), parents)",
+            orderBy: options.orderBy ?? "modifiedTime desc",
           });
 
-          const info = {
-            name: response.data.name ?? "Unknown",
-            parents: response.data.parents ?? undefined,
+          return {
+            files: response.data.files ?? [],
+            nextPageToken: response.data.nextPageToken,
+            incompleteSearch: response.data.incompleteSearch ?? false,
+            error: null,
           };
-
-          folderCache.set(folderId, info);
-          return info;
         } catch (error) {
-          console.error(`Error fetching folder info for ${folderId}:`, error);
-          const fallbackInfo = { name: "Unknown", parents: undefined };
-          folderCache.set(folderId, fallbackInfo);
-          return fallbackInfo;
+          console.warn(`File search failed for query: ${finalQuery}`, error);
+          return {
+            files: [],
+            nextPageToken: undefined,
+            incompleteSearch: true,
+            error: error as Error,
+          };
         }
       };
 
-      // Helper function to build file path
-      const buildFilePath = async (parents?: string[]): Promise<string> => {
-        if (!parents || parents.length === 0) return "/";
-
-        const pathParts: string[] = [];
-        let currentParents = parents;
-
-        // Traverse up the folder hierarchy
-        while (currentParents && currentParents.length > 0) {
-          const parentId = currentParents[0];
-          if (!parentId) break;
-          const folderInfo = await getFolderInfo(parentId);
-
-          pathParts.unshift(folderInfo.name);
-          currentParents = folderInfo.parents ?? [];
-
-          // Prevent infinite loops
-          if (pathParts.length > 20) break;
-        }
-
-        return "/" + pathParts.join("/");
-      };
-
-      // Helper function to recursively get all folder IDs
-      const getAllFolderIds = async (parentId: string): Promise<string[]> => {
-        const folderIds: string[] = [parentId];
-
-        if (!recursive) return folderIds;
-
-        try {
-          let nextPageToken: string | undefined;
-
-          do {
-            const response = await drive.files.list({
-              q: `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-              fields: "nextPageToken, files(id, name, parents)",
-              pageSize: 100,
-              pageToken: nextPageToken,
-            });
-
-            const folders = response.data.files ?? [];
-
-            // Add folder info to cache
-            for (const folder of folders) {
-              if (folder.id) {
-                folderCache.set(folder.id, {
-                  name: folder.name ?? "Unknown",
-                  parents: folder.parents ?? undefined,
-                });
-              }
-            }
-
-            // Recursively get subfolders
-            for (const folder of folders) {
-              if (folder.id) {
-                const subFolderIds = await getAllFolderIds(folder.id);
-                folderIds.push(...subFolderIds);
-              }
-            }
-
-            nextPageToken = response.data.nextPageToken ?? undefined;
-          } while (nextPageToken);
-        } catch (error) {
-          console.warn(`Failed to get subfolders for ${parentId}:`, error);
-        }
-
-        return folderIds;
-      };
-
-      // Get all folder IDs to search in
-      let folderIds: string[] = [];
-      if (folderId) {
-        folderIds = await getAllFolderIds(folderId);
-      }
-
-      // Build search query
+      // Build search query (without folder constraints - we'll handle that via cache)
       const buildSearchQuery = (
         query: string,
         options: {
           mimeType?: string;
-          folderId?: string;
           nameOnly?: boolean;
           modifiedSince?: string;
           fileTypes?: string[];
@@ -229,78 +166,299 @@ export const googleDriveSearchFilesToolConfigServer = (
           conditions.push(`modifiedTime >= '${options.modifiedSince}'`);
         }
 
-        // Add folder restriction
-        if (options.folderId) {
-          conditions.push(`'${options.folderId}' in parents`);
-        }
-
         return conditions.join(" and ");
       };
 
-      // Perform the search
-      const allFiles = [];
-      const maxResults = Math.min(pageSize, 100);
-      let processedResults = 0;
-      let foldersSearched = 0;
+      const buildEnhancedDirectoryStructure = async (
+        rootFolderId: string,
+        onProgress?: (progress: {
+          message: string;
+          progress: number;
+          foldersProcessed: number;
+        }) => void,
+      ): Promise<{
+        folderIds: string[];
+        cacheHit: boolean;
+        changedFolders?: string[];
+      }> => {
+        console.log(`Building directory structure for folder: ${rootFolderId}`);
 
-      if (folderIds.length > 0) {
-        // Search in each folder
-        for (const currentFolderId of folderIds) {
-          if (processedResults >= maxResults) break;
+        // Check if we can use cached structure
+        const cacheStats = await directoryCache.getCacheStats();
+        console.log(
+          `Cache stats: ${cacheStats.totalFolders} folders, age: ${Math.round(cacheStats.cacheAge / 1000 / 60)}m`,
+        );
 
-          foldersSearched++;
-          const searchQuery = buildSearchQuery(query, {
-            mimeType,
-            folderId: currentFolderId,
-            nameOnly,
-            modifiedSince,
-            fileTypes,
-          });
+        // Get initial folder structure - this returns cache hit info implicitly
+        const folderCountBefore = cacheStats.totalFolders;
 
-          try {
-            const response = await drive.files.list({
-              q: searchQuery,
-              pageSize: Math.min(maxResults - processedResults, 50),
-              fields:
-                "nextPageToken, incompleteSearch, files(id, name, mimeType, size, modifiedTime, createdTime, webViewLink, iconLink, owners(displayName, emailAddress), parents)",
-              orderBy: "modifiedTime desc",
-            });
+        const folderIds = await directoryCache.buildDirectoryStructure(
+          drive,
+          rootFolderId,
+          onProgress,
+        );
 
-            const files = response.data.files ?? [];
-            allFiles.push(...files);
-            processedResults += files.length;
-          } catch (error) {
-            console.warn(`Search failed for folder ${currentFolderId}:`, error);
+        const folderCountAfter = (await directoryCache.getCacheStats())
+          .totalFolders;
+
+        const cacheHit =
+          folderCountBefore > 0 && folderCountBefore === folderCountAfter;
+
+        console.log(
+          `Directory structure: ${folderIds.length} folders (cache hit: ${cacheHit})`,
+        );
+
+        let changedFolders: string[] = [];
+        if (cacheHit && cacheStats.cacheAge > 2 * 60 * 60 * 1000) {
+          // If cache is older than 2 hours
+          console.log(
+            "Cache is relatively old, checking for incremental updates...",
+          );
+
+          // Sample a few folders to see if they've changed
+          const sampleFolders = folderIds.slice(
+            0,
+            Math.min(5, folderIds.length),
+          );
+          const potentialChanges = [];
+
+          for (const folderId of sampleFolders) {
+            try {
+              const folderInfo = await drive.files.get({
+                fileId: folderId,
+                fields: "modifiedTime",
+              });
+
+              // Compare with cache timestamp (this is a simplified check)
+              const folderModTime = new Date(
+                folderInfo.data.modifiedTime ?? 0,
+              ).getTime();
+              const cacheTime = cacheStats.lastSync.getTime();
+
+              if (folderModTime > cacheTime) {
+                potentialChanges.push(folderId);
+              }
+            } catch (error) {
+              console.warn(
+                `Could not check folder ${folderId} for changes:`,
+                error,
+              );
+            }
+          }
+
+          if (potentialChanges.length > 0) {
+            console.log(
+              `Found ${potentialChanges.length} potentially changed folders, performing incremental update...`,
+            );
+            await directoryCache.incrementalUpdate(
+              drive,
+              potentialChanges,
+              (progress) => {
+                console.log(
+                  `Incremental update: ${progress.message} (${progress.progress.toFixed(1)}%)`,
+                );
+              },
+            );
+            changedFolders = potentialChanges;
           }
         }
-      } else {
-        // Global search
-        foldersSearched = 1;
-        const searchQuery = buildSearchQuery(query, {
+
+        return { folderIds, cacheHit, changedFolders };
+      };
+
+      const performCachedSearch = async (
+        rootFolderId: string,
+        searchQuery: string,
+        maxResults: number,
+      ) => {
+        console.log(`Starting cached search for folder: ${rootFolderId}`);
+
+        // Phase 1: Get folder structure with explicit cache tracking
+        const folderDiscoveryStart = Date.now();
+
+        const { folderIds, cacheHit, changedFolders } =
+          await buildEnhancedDirectoryStructure(rootFolderId, (progress) => {
+            console.log(
+              `Cache progress: ${progress.message} (${progress.progress.toFixed(1)}%)`,
+            );
+          });
+
+        console.log(
+          cacheHit
+            ? "Cache Hit: Used existing cache."
+            : "Cache Miss: Built fresh directory structure.",
+        );
+
+        const folderDiscoveryTime = Date.now() - folderDiscoveryStart;
+        console.log(
+          `Folder discovery completed in ${folderDiscoveryTime}ms. Found ${folderIds.length} folders (cache hit: ${cacheHit})`,
+        );
+
+        if (changedFolders && changedFolders.length > 0) {
+          console.log(
+            `Incremental update applied to ${changedFolders.length} folders`,
+          );
+        }
+
+        // Phase 2: Parallel batch search across all folders
+        const searchStart = Date.now();
+        const allFiles = [];
+        const batchSize = 8;
+        let processedFolders = 0;
+        const searchErrors: Array<{ folderId: string; error: Error }> = [];
+
+        // Process folders in batches to respect API limits and optimize performance
+        for (let i = 0; i < folderIds.length; i += batchSize) {
+          const batchFolderIds = folderIds.slice(i, i + batchSize);
+
+          const batchPromises = batchFolderIds.map(async (folderId) => {
+            const result = await performFileSearch(searchQuery, {
+              folderId,
+              pageSize: Math.min(50, maxResults - allFiles.length),
+            });
+
+            if (result.error) {
+              searchErrors.push({ folderId, error: result.error });
+            }
+
+            return {
+              folderId,
+              ...result,
+            };
+          });
+
+          // Wait for this batch to complete
+          const batchResults = await Promise.all(batchPromises);
+
+          // Collect results from this batch
+          for (const result of batchResults) {
+            if (result.files.length > 0) {
+              allFiles.push(...result.files);
+              console.log(
+                `Found ${result.files.length} files in folder ${result.folderId}`,
+              );
+            }
+            processedFolders++;
+          }
+
+          // Early termination if we have enough results
+          if (allFiles.length >= maxResults) {
+            console.log(
+              `Early termination: Found ${allFiles.length} files, stopping search.`,
+            );
+            break;
+          }
+
+          // Log progress
+          if (i + batchSize < folderIds.length) {
+            const progress = ((i + batchSize) / folderIds.length) * 100;
+            console.log(
+              `Search progress: ${progress.toFixed(1)}% (${processedFolders}/${folderIds.length} folders)`,
+            );
+          }
+        }
+
+        const searchTime = Date.now() - searchStart;
+        console.log(
+          `File search completed in ${searchTime}ms. Found ${allFiles.length} total files.`,
+        );
+
+        if (searchErrors.length > 0) {
+          console.warn(
+            `Search errors occurred in ${searchErrors.length} folders:`,
+            searchErrors,
+          );
+        }
+
+        return {
+          files: allFiles,
+          foldersSearched: processedFolders,
+          folderDiscoveryTime,
+          searchTime,
+          totalFolders: folderIds.length,
+          cacheHit,
+          searchErrors,
+          changedFolders,
+        };
+      };
+
+      // Execute the search
+      let searchResult;
+      const maxResults = Math.min(pageSize, 100);
+
+      if (folderId && recursive) {
+        // Use cached recursive search
+        const baseQuery = buildSearchQuery(query, {
           mimeType,
           nameOnly,
           modifiedSince,
           fileTypes,
         });
 
-        try {
-          const response = await drive.files.list({
-            q: searchQuery,
-            pageToken: pageToken ?? undefined,
-            pageSize: maxResults,
-            fields:
-              "nextPageToken, incompleteSearch, files(id, name, mimeType, size, modifiedTime, createdTime, webViewLink, iconLink, owners(displayName, emailAddress), parents)",
-            orderBy: "modifiedTime desc",
-          });
+        searchResult = await performCachedSearch(
+          folderId,
+          baseQuery,
+          maxResults,
+        );
+      } else if (folderId && !recursive) {
+        // Use centralized search function for non-recursive
+        const baseQuery = buildSearchQuery(query, {
+          mimeType,
+          nameOnly,
+          modifiedSince,
+          fileTypes,
+        });
 
-          allFiles.push(...(response.data.files ?? []));
-        } catch (error) {
-          console.error("Global search failed:", error);
-        }
+        const result = await performFileSearch(baseQuery, {
+          folderId,
+          pageToken: pageToken ?? undefined,
+          pageSize: maxResults,
+        });
+
+        searchResult = {
+          files: result.files,
+          foldersSearched: 1,
+          folderDiscoveryTime: 0,
+          searchTime: Date.now() - startTime,
+          totalFolders: 1,
+          cacheHit: false,
+          nextPageToken: result.nextPageToken,
+          incompleteSearch: result.incompleteSearch,
+          searchErrors: result.error
+            ? [{ folderId: folderId, error: result.error }]
+            : [],
+        };
+      } else {
+        // Use centralized search function for global search
+        const baseQuery = buildSearchQuery(query, {
+          mimeType,
+          nameOnly,
+          modifiedSince,
+          fileTypes,
+        });
+
+        const result = await performFileSearch(baseQuery, {
+          pageToken: pageToken ?? undefined,
+          pageSize: maxResults,
+        });
+
+        searchResult = {
+          files: result.files,
+          foldersSearched: 1,
+          folderDiscoveryTime: 0,
+          searchTime: Date.now() - startTime,
+          totalFolders: 1,
+          cacheHit: false,
+          nextPageToken: result.nextPageToken,
+          incompleteSearch: result.incompleteSearch,
+          searchErrors: result.error
+            ? [{ folderId: "global", error: result.error }]
+            : [],
+        };
       }
 
       // Remove duplicates and sort
-      const uniqueFiles = allFiles.filter(
+      const uniqueFiles = searchResult.files.filter(
         (file, index, self) =>
           index === self.findIndex((f) => f.id === file.id),
       );
@@ -314,40 +472,78 @@ export const googleDriveSearchFilesToolConfigServer = (
       // Take only the requested number of results
       const finalFiles = uniqueFiles.slice(0, maxResults);
 
-      // Transform files and add paths
+      // 🧩 IMPROVED: Build file paths efficiently using enhanced cache
       const transformedFiles = await Promise.all(
-        finalFiles.map(async (file) => ({
-          id: file.id!,
-          name: file.name!,
-          mimeType: file.mimeType!,
-          size: file.size ?? undefined,
-          modifiedTime: file.modifiedTime ?? undefined,
-          createdTime: file.createdTime ?? undefined,
-          webViewLink: file.webViewLink ?? undefined,
-          iconLink: file.iconLink ?? undefined,
-          owners:
-            file.owners?.map((owner) => ({
-              displayName: owner.displayName ?? undefined,
-              emailAddress: owner.emailAddress ?? undefined,
-            })) ?? undefined,
-          parents: file.parents ?? undefined,
-          path: await buildFilePath(
-            file.parents === null ? undefined : file.parents,
-          ),
-        })),
+        finalFiles.map(async (file) => {
+          let path = "/";
+
+          if (file.parents && file.parents.length > 0) {
+            // Use cache to get path efficiently - this now has proper folder names
+            const parentId = file.parents[0];
+            if (parentId) {
+              path = (await directoryCache.getFolderPath(parentId)) ?? "/";
+            }
+          }
+
+          return {
+            id: file.id!,
+            name: file.name!,
+            mimeType: file.mimeType!,
+            size: file.size ?? undefined,
+            modifiedTime: file.modifiedTime ?? undefined,
+            createdTime: file.createdTime ?? undefined,
+            webViewLink: file.webViewLink ?? undefined,
+            iconLink: file.iconLink ?? undefined,
+            owners:
+              file.owners?.map((owner) => ({
+                displayName: owner.displayName ?? undefined,
+                emailAddress: owner.emailAddress ?? undefined,
+              })) ?? undefined,
+            parents: file.parents ?? undefined,
+            path,
+          };
+        }),
       );
 
-      const searchDuration = Date.now() - startTime;
+      const totalDuration = Date.now() - startTime;
+
+      // Enhanced logging for performance analysis
+      console.log(`=== SEARCH PERFORMANCE SUMMARY ===`);
+      console.log(`Total Duration: ${totalDuration}ms`);
+      console.log(
+        `Folder Discovery: ${searchResult.folderDiscoveryTime}ms (cache hit: ${searchResult.cacheHit})`,
+      );
+      console.log(`File Search: ${searchResult.searchTime}ms`);
+      console.log(
+        `Folders Searched: ${searchResult.foldersSearched}/${searchResult.totalFolders}`,
+      );
+      console.log(`Files Found: ${finalFiles.length}`);
+      console.log(`Search Errors: ${searchResult.searchErrors?.length || 0}`);
+      if (
+        searchResult.changedFolders &&
+        searchResult.changedFolders.length > 0
+      ) {
+        console.log(
+          `Incremental Updates: ${searchResult.changedFolders.length} folders updated`,
+        );
+      }
+      console.log(`=====================================`);
 
       return {
         files: transformedFiles,
-        nextPageToken: undefined, // Custom pagination for recursive search
+        nextPageToken:
+          "nextPageToken" in searchResult
+            ? (searchResult.nextPageToken ?? undefined)
+            : undefined,
         incompleteSearch:
-          folderIds.length > 0 && processedResults >= maxResults,
+          ("incompleteSearch" in searchResult
+            ? searchResult.incompleteSearch
+            : false) ??
+          searchResult.foldersSearched < searchResult.totalFolders,
         searchStats: {
           totalFound: uniqueFiles.length,
-          foldersSearched,
-          searchDuration,
+          foldersSearched: searchResult.foldersSearched,
+          searchDuration: totalDuration,
         },
       };
     },
