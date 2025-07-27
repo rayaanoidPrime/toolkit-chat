@@ -28,7 +28,7 @@ export class DirectoryCache {
   private readonly CACHE_VERSION = "1.1";
   private readonly CACHE_TTL = 24 * 60 * 60 * 1000;
 
-  constructor(cacheDir = "./.drive-cache") {
+  constructor(cacheDir = "/tmp/drive-cache") {
     this.cachePath = cacheDir;
     this.cacheFile = join(cacheDir, "directory_structure.json");
     this.metadataFile = join(cacheDir, "cache_metadata.json");
