@@ -67,7 +67,7 @@ Reading Files:
 - Stop reading when cumulative findings adequately address the user's query`,
   async () => {
     const serviceAccountKey = env.GOOGLE_SERVICE_KEY as string;
-    const folderId = env.GOOGLE_DRIVE_FOLDER_ID!;
+    const folderId = env.GOOGLE_DRIVE_FOLDER_ID;
 
     if (!serviceAccountKey) {
       throw new Error("GOOGLE_SERVICE_KEY is not set");
