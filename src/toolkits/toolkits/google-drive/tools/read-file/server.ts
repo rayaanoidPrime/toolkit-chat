@@ -45,7 +45,7 @@ Guidelines:
 - Use it to avoid repeating information already captured
 - Update it with new insights from the current file
 - Highlight unique insights not already covered in cumulative findings
-- Recommend continuing if significant gaps remain or if this file suggests other relevant files exist
+- Recommend continuing only if there are clear gaps or the file suggests more relevant information exists
 - Recommend stopping if the search context appears well-covered
 
 Respond with ONLY a JSON object (no markdown formatting or code blocks):

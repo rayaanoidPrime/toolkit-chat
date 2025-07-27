@@ -35,7 +35,7 @@ import { openai } from "@ai-sdk/openai";
 import { getServerToolkit } from "@/toolkits/toolkits/server";
 import { languageModels } from "@/ai/models";
 
-export const maxDuration = 60;
+export const maxDuration = 180;
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -220,7 +220,7 @@ export async function POST(request: Request) {
     const isOpenAi = selectedChatModel.startsWith("openai");
 
     // Build comprehensive system prompt
-    const baseSystemPrompt = `You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with \`\`\``;
+    const baseSystemPrompt = `You are a helpful assistant. Whenever you are asked to write code, you must include a language with \`\`\``;
 
     const toolkitInstructions =
       toolkitSystemPrompts.length > 0
