@@ -263,7 +263,6 @@ export class DirectoryCache {
     return folder.children;
   }
 
-  // 🧩 IMPROVED: More robust path resolution
   async getFolderPath(folderId: string): Promise<string> {
     const folder = this.cache.get(folderId);
     if (!folder) {
@@ -274,7 +273,6 @@ export class DirectoryCache {
     return folder.path;
   }
 
-  // 🧩 NEW: Get folder name
   async getFolderName(folderId: string): Promise<string> {
     const folder = this.cache.get(folderId);
     return folder?.name ?? "Unknown";

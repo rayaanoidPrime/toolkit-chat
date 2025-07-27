@@ -184,7 +184,7 @@ async function exportGdriveFile(
 }
 
 export const googleDriveReadFileToolConfigServer = (
-  keyFile: string,
+  key: string,
 ): ServerToolConfig<
   typeof readFileTool.inputSchema.shape,
   typeof readFileTool.outputSchema.shape
@@ -197,7 +197,7 @@ export const googleDriveReadFileToolConfigServer = (
       cumulativeFindings,
     }) => {
       const auth = new google.auth.GoogleAuth({
-        keyFile: keyFile,
+        credentials: JSON.parse(key) as Record<string, unknown>,
         scopes: ["https://www.googleapis.com/auth/drive.readonly"],
       });
 

@@ -120,7 +120,7 @@ export const env = createEnv({
     EXA_API_KEY: z.string().optional(),
     MEM0_API_KEY: z.string().optional(),
     E2B_API_KEY: z.string().optional(),
-    GOOGLE_SERVICE_ACCOUNT_KEY_PATH: z.string().optional(),
+    GOOGLE_SERVICE_KEY: z.string(),
     GOOGLE_DRIVE_FOLDER_ID: z.string().optional(),
     ...createAuthSchema(),
     ...createImageModelSchema(),
@@ -149,8 +149,7 @@ export const env = createEnv({
     EXA_API_KEY: process.env.EXA_API_KEY,
     MEM0_API_KEY: process.env.MEM0_API_KEY,
     E2B_API_KEY: process.env.E2B_API_KEY,
-    GOOGLE_SERVICE_ACCOUNT_KEY_PATH:
-      process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH,
+    GOOGLE_SERVICE_KEY: process.env.GOOGLE_SERVICE_KEY,
     GOOGLE_DRIVE_FOLDER_ID: process.env.GOOGLE_DRIVE_FOLDER_ID,
     ...authRuntimeEnv(),
     ...imageModelRuntimeEnv(),

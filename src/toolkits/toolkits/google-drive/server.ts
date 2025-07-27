@@ -66,11 +66,11 @@ Reading Files:
 - Pay attention to shouldContinueReading recommendations
 - Stop reading when cumulative findings adequately address the user's query`,
   async () => {
-    const keyFile = env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH!;
+    const serviceAccountKey = env.GOOGLE_SERVICE_KEY as string;
     const folderId = env.GOOGLE_DRIVE_FOLDER_ID!;
 
-    if (!keyFile) {
-      throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY_PATH is not set");
+    if (!serviceAccountKey) {
+      throw new Error("GOOGLE_SERVICE_KEY is not set");
     }
 
     if (!folderId) {
@@ -79,10 +79,11 @@ Reading Files:
 
     return {
       [GoogleDriveTools.SearchFiles]: googleDriveSearchFilesToolConfigServer(
-        keyFile,
+        serviceAccountKey,
         folderId,
       ),
-      [GoogleDriveTools.ReadFile]: googleDriveReadFileToolConfigServer(keyFile),
+      [GoogleDriveTools.ReadFile]:
+        googleDriveReadFileToolConfigServer(serviceAccountKey),
     };
   },
 );

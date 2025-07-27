@@ -1,10 +1,10 @@
 import { type searchFilesTool } from "./base";
-import { drive_v3, google } from "googleapis";
+import { google } from "googleapis";
 import type { ServerToolConfig } from "@/toolkits/types";
 import { DirectoryCache } from "../../cache/DirectoryCache";
 
 export const googleDriveSearchFilesToolConfigServer = (
-  keyFile: string,
+  key: string,
   folderId?: string,
 ): ServerToolConfig<
   typeof searchFilesTool.inputSchema.shape,
@@ -26,7 +26,7 @@ export const googleDriveSearchFilesToolConfigServer = (
       const startTime = Date.now();
 
       const auth = new google.auth.GoogleAuth({
-        keyFile: keyFile,
+        credentials: JSON.parse(key) as Record<string, unknown>,
         scopes: ["https://www.googleapis.com/auth/drive.readonly"],
       });
 
