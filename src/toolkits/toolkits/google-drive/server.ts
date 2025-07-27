@@ -66,7 +66,7 @@ Reading Files:
 - Pay attention to shouldContinueReading recommendations
 - Stop reading when cumulative findings adequately address the user's query`,
   async () => {
-    const serviceAccountKey = env.GOOGLE_SERVICE_KEY as string;
+    const serviceAccountKey = env.GOOGLE_SERVICE_KEY;
     const folderId = env.GOOGLE_DRIVE_FOLDER_ID;
 
     if (!serviceAccountKey) {
